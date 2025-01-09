@@ -1,0 +1,304 @@
+---
+title: "Reproducible coding"
+author: "Hyoungchul Kim"
+format: 
+  revealjs:
+    transition: slide
+    scrollable: true
+    math:
+      engine: katex
+    fontsize: 20pt 
+    footer: "Wharton UPenn"
+    embed-resources: true
+---
+<style>
+pre code { 
+    font-size: 2em; 
+}
+code { 
+    font-size: 1em; 
+}
+</style>
+
+## Why reproducible coding?{#sec-first_slide}
+
+- <p style="font-size:26px;">Empirical analysis is becoming more data-intensive and complex (big data, HPC computing, etc).</p>
+- <p style="font-size:26px;">It is difficult for researchers to manually track the analysis.</p>
+- <p style="font-size:26px;">What if you make a mistake that can fatally affect your main result? (e.g. Data pre-processing was wrong but cannot be reproduced)</p>
+- <p style="font-size:26px;">A Lot of top journals are incorporating code-editor these days.</p>
+- <p style="font-size:26px;">[AER example](https://retractionwatch.com/2023/07/18/econ-study-retracted-after-researchers-find-undocumented-alterations-in-the-code/)</p>
+
+## What do we need to learn?
+Reproducible coding is not a single tool. It is a combination of multiple tools such as:
+
+- Shell (Bash).
+- Git.
+- Project environment (renv, poetry, etc).
+- Docker.
+- Automation (Make, Snakemake).
+
+We will briefly discuss these. You can learn more about them on your own after this.
+
+## Setting up
+
+From now on, we will be using shell (or terminal, bash, etc) a lot. Using a shell is a must for reproducible coding. In order to use this, the setup differs by the type of OS you are using.
+
+### for Linux
+Great choice! You are good to go.
+
+### for Mac
+Mostly okay. Install "homebrew" and you are good to go. But consider trying out linux using a 14-day free-trial of parallel desktop.
+
+### for Windows
+Tbh, some features are not going to work. Use WSL2 if you really want to use Windows. But I recommend you either use Mac or linux.
+
+[We don't have time. So I am not going to tell you how to do this setup. DIY before the lecture.]{style="color:red;"}
+
+# Shell (Bash)
+
+## Shell
+
+We will briefly follow the lecture note by Grant McDermott. But sth I want to emphasize:
+
+1. Know the file system.
+2. Know the CLI logic.
+3. Why is shell helpful in reproducible coding?
+
+## Basic definition
+
+- Shell: A program that interprets your command and passes it onto your OS.
+- Bash (Bourne Again SHell): A type of shell that is widely used.
+- Terminal: Interface that allows users to type commands.
+
+## Basic commands
+
+```{bash}
+#| echo: true
+#| eval: false
+ls [filename]
+touch [filename] 
+mkdir [directory-name]
+rm [filename]
+rm -rf [directory-name]
+mv [file-name] ../parent-directory/
+mv [old-name] [new-name]
+```
+
+Checking your current directory and moving to other directory
+```{bash}
+#| echo: true
+#| eval: false 
+pwd
+cd directory
+cd ..
+cd .
+cd ../..
+```
+
+Why is this useful?
+
+```{bash}
+#| echo: true
+#| eval: false 
+# Making multiple files with similar names
+touch car{1..1000}.txt
+
+# removing multiple files with similar names
+rm *.txt
+```
+
+## Write a shell script
+
+Like a source code file in `R`, `Python`, we can also write a script for shell. 
+
+For example, we can write a file `run.sh`:
+
+```{bash}
+#| echo: true
+#| eval: false
+
+#!/bin/bash 
+
+echo "Hello, world."
+```
+
+## More
+
+We can do lot more with bash. But I will stop for now. You can study more on your own. Bash will become our main playground from now on.
+
+# Project environment
+
+## Maintaining a closed environment
+
+Have you ever experienced...
+
+- My past code does not work because some packages I used got updated or changed.
+- My coauthor cannot use my code because they have different version of the package that I used. 
+- Some packages that I used are no longer working because it used some other package (`depencencies`) which is now obsolete.
+
+[Solutions: Make a close environment where you can store and track all the versions and dependencies of the packages that you used.]{style="color:red;"}
+
+## `Renv` package in R
+
+In `R`, lot of ppl use `renv` package to do this.
+
+### Setup
+
+1. Create a `r-project.`
+2. Install `renv` package and load it.
+```{r}
+#| echo: true
+# install it if you haven't
+# install.packages("renv")
+
+# load the package
+library(renv)
+```
+3. `renv` will (most of the time) automatically check the list of packages (their versions and dependencies) you used in your project and will record them in `renv.lock` file. 
+4. `renv` will also create a folder named `renv` (of course). This is a folder where `renv` will store the packages you used in this project. [(Instead of having a global library for packages, it creates separate space where you can store the packages you used in this project).]{style="color:red;"}
+
+### Your `renv` workflow
+
+0. Use `renv::init()` to create `renv` environment in your project.
+
+1. Write down your code.
+
+2. Time to time, use `renv::snapshot()` to update the `renv.lock` file. eg, if you install some new packages, it will be installed into your local library folder. If you use `renv::snapshot()`, the new package information will be recorded in the `renv.lock` file.
+
+3. In the end, provide the renv folder and the `renv.lock` file to other ppl.
+
+### Other's `renv` workflow
+
+1. Download your project and open up the r-project.
+2. Assuming they have `renv` package, this is trigger `renv` package to restore the environment with the `renv.lock` file.
+3. Other ppl can use the `renv::restore()` to get the necessary environment to run the project.
+
+## `renv` process summary
+
+1. By `renv::init()`, you create the `renv` folder and `renv.lock` file. 
+
+2. `renv` folder contains local library space where you can separately contain your packages and their dependencies.
+
+3. `renv.lock` file contains information (version and dependencies) of the packages that you are using for your project.
+
+4. `renv::snapshot()` will store any changes in your package environment nto the `renv.lock` file.
+
+5. `renv::restore()` will allow other ppl to use your project environment.
+
+### Only caveat?
+
+[`renv` package does not keep track of your `R` version.]{style="color:red;"}
+
+## `poetry` in Python
+
+There are many choices for `Python`. Some use `conda` environment, some use `venv`, etc...
+
+But today, I am going to try `poetry` package in Python. The process is very similar to `renv`. So I will be brief on this one.
+
+### Process
+
+0. Unlike `renv`, we will be using commands in the shell.
+
+1. Similar to `renv`, `poetry` creates a lock file `poetry.lock`.
+
+2. Using `poetry init` command creates a new virtual environment where you can store your dependencies.
+
+3. You can add specific version of python packages using `poetry add [package-name]==[version-number]`.
+
+4. `poetry` also creates `pyproject.toml` file which has metadata of the project.
+
+### Some caveats
+
+- `poetry` is relatively new, so it is somewhat error-prone compared to other dependency managers.
+- When running python files in terminal, you need to run it by adding prefix `poetry`. e.g: `poetry run poetry3 python.py`.
+- In order to use a shell with poetry python environment, you first need to type `poetry shell`.
+
+## Conclusion
+
+- Check out some project environment / dependency manager for your programming language.
+- By using such manager, it will help you from future errors due to change in the packages you used.
+
+# Automation w/ Make
+
+## Why automation?
+
+- Suppose that you have a very heavy project (quite common) that has tons of source code files that clean, manipulate, and create results from some raw data.
+- Now suppose you need to modify one file.
+- What other files should you run? Some files will be affected by your modification but some might not be.
+- You could just re-run the whole project. But it will be very inefficient for a big project (hundreds of source code file?).
+- This is where automation comes in. It helps you figure out the dependencies in your workflow.
+
+## Make and Makefile
+
+Make is a command-line interface software tool that performs actions ordered by configured dependencies as defined in a configuration file called a `Makefile` (WTF?).
+
+- Suppose you have a raw data named `raw.csv`.
+- Suppose you use a code file named `clean.R` to clean to raw data.
+- This code also creates the refined data called `refined.rds`.
+- This is a dependency: `raw.csv` + `clean.R` => `refined.rds`.
+- `Make` software allows you to write down this dependency in a file named `Makefile`.
+- When there is a change in this dependency, you can just run the `Makefile` and this is re-run the necessary files that are affected by the change.
+
+# Docker
+
+## But this is still not enough!
+
+- In fact, the packages you use may operate bit differently (in the background) depending on your OS.
+- Result of this difference: **But this works on my computer!**
+- Solution? Ship your computer to the person.
+- This is the idea of **Docker**.
+- Kind of like a virtual machine (VM). However, unlike virtual machines, we only wrap the necessary programs and software to run the project.
+
+## Process of Docker workflow
+
+![Docker workflow](images/docker.png)
+
+## Quick terminology
+
+- Dockerfile: "The sheet music." The list of layers and instructions for building a Docker image.
+
+- Image: "The MP3 file." This is the tarball.
+
+- Container: "Song playing on my phone." A container is a running instance of an image.
+
+## Docker workflow
+
+Learning by doing.
+
+1. Create Dockerfile.
+
+2. Build Docker image using Dockerfile.
+
+```{bash}
+#| echo: true
+#| eval: false 
+sudo docker build --network=host --tag <PROJECT_NAME>:VERSION . 
+```
+
+3. Run Docker image.
+
+```{bash}
+#| echo: true
+#| eval: false 
+sudo docker run -it --rm <PROJECT_NAME>:VERSION
+```
+
+<br/>
+
+### Some useful Docker-related commands
+
+```{bash}
+#| echo: true
+#| eval: false 
+# check cached docker images
+sudo docker images
+
+# check docker containers that are running
+sudo docker ps
+
+# remove the docker image
+sudo docker rmi <IMAGE_NAME>
+
+# remove all dangling images and caches (do it periodically to save space)
+sudo docker system prune
+```
