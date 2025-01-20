@@ -302,3 +302,25 @@ sudo docker rmi <IMAGE_NAME>
 # remove all dangling images and caches (do it periodically to save space)
 sudo docker system prune
 ```
+
+## Final words 1: Follow the gurus
+
+- [Jonathan Dingel](http://www.jdingel.com/)
+
+- [Grant R. McDermott](https://grantmcdermott.com/)
+
+- [Gentzkow and Shapiro](https://web.stanford.edu/~gentzkow/research/CodeAndData.pdf)
+
+## Final words 2: Become an active googler
+
+Places to resort to
+
+- Stack Overflow
+
+- Quora
+
+- Reddit
+
+- ... and Many more!
+
+
